@@ -1,2 +1,2 @@
 - Hi, This Devadhathan
-- get to know me later
+get me ready with a PC (4090ti). jk⚰️😁.
