@@ -2,8 +2,7 @@ A python (.py) file which has got a fully functioning code required for "Hotel B
 
 The contents of the program contain,
 
-> Window for storing client details (Customer details and room types) in a MySql database (have a datbase named "bookings_management" or change the Database connection accordingly)
-
+> Window for storing client details (Customer details and room types) in a MySql database named "cs_projekt" under the table "bookments"
 > Window for displaying the foods available
 
 > Window for Payments (The room charges and food charges will be displayed )
