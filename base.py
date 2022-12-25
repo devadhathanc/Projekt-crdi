@@ -4,17 +4,18 @@ from tkinter import *
 import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
+from PIL import ImageTk,Image
 root=Tk()
 root.title("CS Project")
 root.geometry("350x360")
 root.resizable(False,False)
 
 
-def booktab():
-    labelmn=Label(root,text="BOOKINGS", font="Cordia 20 bold",bg="grey",fg="black")
+def booktab(): # Main Home Tab
+    labelmn=Label(root,text="Sad🛌Beds", font="Cordia 20 bold",bg="grey",fg="black")
     labelmn.pack(fill="both")
 
-    def btab():
+    def btab(): # Bookings Tab----------------------------------------------------------------------------------
         labelmn.destroy()
         rinfo_but.destroy()
         rserv_but.destroy()
@@ -29,7 +30,7 @@ def booktab():
 
         #backend
         def verify():
-            
+            global name,phone,datein,dateout,location
             name = name_value.get()
             phone = phone_value.get()
             datein = dtin_value.get()
@@ -50,9 +51,7 @@ def booktab():
                     else:
                         nu=False
                         break
-                
-
-
+             
             if name=="":
                 messagebox.showerror("Error","Please enter your name")
             elif phone=="":
@@ -71,6 +70,7 @@ def booktab():
             elif location=="":
                 messagebox.showerror("Error","Please enter the Location")
             else:
+                
                 all_lbl.config(text="All Good👍, Proceed Further",font="lucida 9 bold italic")
                 vr_but.destroy()
                 global nxt1_but
@@ -78,7 +78,7 @@ def booktab():
                 nxt1_but.place(x=115,y=280)
 
                 #backend--which creates a new file
-                with open(name+'.txt','w') as f:
+                with open(name+'.txt','a') as f:
                     f.write('Name:'+name+'\n')
                     f.write('Phone No:'+phone+'\n')
                     f.write('From:'+datein+'\n')
@@ -86,14 +86,34 @@ def booktab():
                     f.write('Destination:'+location+'\n')
                 
                 #backend--which stores in the databases
-                store_list=(name,phone,datein,dateout,location)
+                store_list=(name,phone,str(datein),str(dateout),location)
 
-                mycon=mysql.connector.connect(host='localhost',user='root',passwd='mypass',database='csproj')
+                mycon=mysql.connector.connect(host='localhost',user='root',passwd='mypass')
                 cursor=mycon.cursor()
-                sql_insert_val = 'insert into bookings_management(Name,Phone,date_in,date_out,locations) values(%s,%s,%s,%s,%s)'
-                cursor.execute(sql_insert_val,store_list)         # should already have a table named "bookings_management"
+                cursor.execute("show databases")
+                lst=cursor.fetchall()
+                db_nm="cs_projekt"
+                if (db_nm,) in lst: #Checks whether the database "cs_projekt" is present
+                    pass                             
+                else:
+                    cursor.execute("create database cs_projekt")  
                 mycon.commit()
-                mycon.close()
+               
+                mycon1=mysql.connector.connect(host='localhost',user='root',passwd='mypass',database='cs_projekt')
+                cursor1=mycon1.cursor()
+                tb_nm="bookments"
+                cursor1.execute("show tables")
+                tlst1=cursor1.fetchall()
+                if (tb_nm,) in tlst1:#Checks whether the tabele "bookments" is present
+                  sql_insert_val = 'insert into bookments(Name,Phone,Check_in,Check_out,Locality) values(%s,%s,%s,%s,%s)'
+                  cursor1.execute(sql_insert_val,store_list)
+                else:
+                  cursor1.execute("create table bookments(Name varchar(199),Phone bigint(10), Check_in varchar(10), Check_out varchar(10), Locality varchar(199), Customer_ID int, Room_Cost int, Food_Cost int, GST_18 int, Total_Cost int)")
+                  sql_insert_val = 'insert into bookments(Name,Phone,Check_in,Check_out,Locality) values(%s,%s,%s,%s,%s)'
+                  cursor1.execute(sql_insert_val,store_list)
+              
+                mycon1.commit()
+                mycon1.close()
 
         
         def nxt():
@@ -133,37 +153,49 @@ def booktab():
                     lb.destroy()
                     lb1.destroy()
                     lb2.destroy()
+                    lb3.destroy()
                     labelrb1.destroy()
-                    btab()
+                    booktab()
                     
-                
                 t1=b1val.get()
                 t2=b2val.get()
                 t3=b3val.get()
                 t4=b4val.get()
                 global trbill
+                global rand_custId
+                
                 trbill=t1*3500+t2*4000+t3*4500+t4*5000
                 rbill["Room Charge"]=trbill
-
+                rand_custId=random.randint(1000,4999)
+                print("Your Customer ID ----->",rand_custId)
                 lbl1.config(text="Booking Confirmed!",font="lucida 13 bold italic underline")
+                
                 extbut = Button(root,text=" BACK ",font="lucida 8 bold", command=bck, activebackground="gray")
                 extbut.place(x=10,y=50)
-
-            
+                
                 for x,y in rbill.items():
                         lb=Label(root,text=x+"   ----->   "+str(y),font="lucida 10 italic",fg="black")
                         lb.pack(padx=2,pady=5)
-
-                g=trbill
+                global gr
+                gr=trbill
+                print("=============================")
+                print("Your Room cost----->",gr)
                 lb1=Label(root,text="________________________",font="bold 7")
                 lb1.pack(padx=3,pady=2)
-                lb2=Label(root,text="Total     --->     "+str(g)+" Rs.",font="lucida 10 italic")
+                lb2=Label(root,text="Total     --->     "+str(gr)+" Rs.",font="lucida 10 italic")
                 lb2.pack(padx=3,pady=2)
+                lb3=Label(root,text="Your Customer ID ---->  "+str(rand_custId),font="lucida 12 bold")
+                lb3.pack(padx=2,pady=20)
 
+                with open(name+'.txt','a') as f:
+                    f.write('Customer ID:'+ str(rand_custId)+'\n')
 
-                
-                
-
+                mycon2=mysql.connector.connect(host='localhost',user='root',passwd='mypass',database='cs_projekt')
+                cursor2=mycon2.cursor()
+                sql_insert_val = ('update bookments set Customer_ID = %s where Name = %s')
+                cursor2.execute(sql_insert_val,(rand_custId,name))
+                mycon2.commit()
+                mycon2.close()
 
             label1.destroy()
             label2.destroy()
@@ -285,7 +317,7 @@ def booktab():
         extbut.place(x=225,y=280)
     
     
-    def ritab():
+    def ritab(): # Rooms information Tab----------------------------------------------------------------------------------
         labelmn.destroy()
         rinfo_but.destroy()
         rserv_but.destroy()
@@ -350,7 +382,7 @@ def booktab():
         ext2_but.place(x=155,y=310)
 
 
-    def rstab():
+    def rstab():# Room Services Tab----------------------------------------------------------------------------------
         labelmn.destroy()
         rinfo_but.destroy()
         rserv_but.destroy()
@@ -843,7 +875,7 @@ def booktab():
 
         def order():
             global t
-            t=bill
+            t=bill.values()
             lbl1.destroy()
             bvr_but.destroy()
             sp_but.destroy()
@@ -856,8 +888,6 @@ def booktab():
             lbl.pack(padx=10,pady=20)
 
             def bck():
-                
-
                 labelrb2.destroy()
                 bvr_but.destroy()
                 sp_but.destroy()
@@ -869,32 +899,23 @@ def booktab():
                 lb1.destroy()
                 lb2.destroy()
                 remv()
-                
-
                 rstab()
 
-            
-
-            extbut = Button(root,text=" BACK ",font="lucida 7", command=bck, activebackground="gray")
-            extbut.place(x=20,y=40)
-
-            
             for x,y in bill.items():
                     lb=Label(root,text=x+"   ----->   "+str(y),font="lucida 9 italic",fg="black")
                     lb.pack(padx=3,pady=2)
                     lr.append(lb)
-                
+
+            extbut = Button(root,text=" BACK ",font="lucida 7", command=bck, activebackground="gray")
+            extbut.place(x=20,y=40)    
             g=sum(bill.values())
+            print("Your food cost ----->",g)
             lb1=Label(root,text="________________________",font="bold 7")
             lb1.pack(padx=3,pady=2)
             lb2=Label(root,text="Total     --->     "+str(g)+" Rs.",font="lucida 10 italic")
             lb2.pack(padx=3,pady=2)
             
-            
-            
-
-            
-
+      
         bvr_but = Button(root, text = "BEVERAGES",font=("lucida",10), activebackground="gray", command=beverages)
         bvr_but.place(relx=0.5,rely=0.5,anchor="center")
         bvr_but.pack(padx=10,pady=3)
@@ -922,10 +943,7 @@ def booktab():
         ord_but.place(x=175,y=310)
         
 
-
-    def ptab():
-        ph=phone_value.get()
-        print(ph)
+    def ptab(): # Payments Tab----------------------------------------------------------------------------------
         labelmn.destroy()
         rinfo_but.destroy()
         rserv_but.destroy()
@@ -935,13 +953,12 @@ def booktab():
 
         labelrb2=Label(root,text="PAYMENTS", font="Cordia 20 bold",bg="grey",fg="black")
         labelrb2.pack(fill="both")
-        
         def cont():
             
-            phone_lst = phone2_value.get()
             
-
-            if phone_lst==int(ph):
+            
+            if phone2_value.get()==rand_custId:
+                extbut1.destroy()
                 lbl.destroy()
                 lbl1.destroy()
                 nxt1_but.destroy()
@@ -952,54 +969,95 @@ def booktab():
                 def bck():
 
                     labelrb2.destroy()
-                    extbut.destroy()
+                    extbut2.destroy()
+                    lb.destroy()
+                    l_b.destroy()
                     lbl.destroy()
-                    extbut.destroy()
+                    lb_l.destroy()
                     lb1.destroy()
                     lb2.destroy()
                     lb3.destroy()
                     lb4.destroy()
-                    clr2_but.destroy()
+                    paid_but.destroy()
 
-                    rstab()
+                    ptab()
 
-                extbut = Button(root,text=" BACK ",font="lucida 7", command=bck, activebackground="gray")
-                extbut.place(x=20,y=40)
-                
+                def paid():
+                    extbut2.destroy()
+                    lb.destroy()
+                    l_b.destroy()
+                    lbl.destroy()
+                    lb_l.destroy()
+                    lb1.destroy()
+                    lb2.destroy()
+                    lb3.destroy()
+                    lb4.destroy()
+                    paid_but.destroy()
+                    lb5=Label(root,text="BILL PAID !!! \n Thanks🙏",font="lucida 12 bold")
+                    lb5.pack(padx=2,pady=25)
+
+                    val=(room_cost,food_cost,gst,tot,name)
+                    with open(name+'.txt','a') as f:
+                      f.write('RoomCost:'+str(room_cost)+'\n')
+                      f.write('FoodCost:'+str(food_cost)+'\n')
+                      f.write('Total Cost:'+str(tot)+'\n')
+
+                    mycon1=mysql.connector.connect(host='localhost',user='root',passwd='mypass',database='cs_projekt')
+                    cursor1=mycon1.cursor()
+                    sql_insert_val = ('update bookments set Room_Cost=%s,Food_Cost=%s,GST_18 = %s,Total_Cost=%s where Name = %s')
+                    cursor1.execute(sql_insert_val,val)
+                    mycon1.commit()
+                    mycon1.close()
+
+                    def bck2():
+                        labelrb2.destroy()
+                        lb5.destroy()
+                        extbut3.destroy()
+                        booktab()
+
+                    extbut3 = Button(root,text=" BACK ",font="lucida 7", command=bck2, activebackground="gray")
+                    extbut3.place(x=20,y=40)
+
+
+                extbut2 = Button(root,text=" BACK ",font="lucida 7", command=bck, activebackground="gray")
+                extbut2.place(x=20,y=40)
                 
                 room_cost=trbill
-                food_cost=sum(t.values())
-                print(room_cost,food_cost)
-                g=room_cost+food_cost
-                print(g)
-                gst=round((18/100*g),2)
-                tot=g+gst
+                food_cost=sum(t)
+                tc=room_cost+food_cost
+                gst=round((18/100*tc),2)
+                tot=tc+gst
+                print("============================")
+                print("Your Total cost (with gst)----->",tot)
                 lb=Label(root,text="Room Charges     --->     "+str(room_cost)+" Rs.",font="lucida 10 italic")
                 lb.pack(padx=3,pady=2)
                 l_b=Label(root,text="Food Cost     --->     "+str(food_cost)+" Rs.",font="lucida 10 italic")
                 l_b.pack(padx=3,pady=2)
                 lb1=Label(root,text="________________________",font="bold 7")
                 lb1.pack(padx=3,pady=2)
-                lb2=Label(root,text="Subtotal     --->     "+str(g)+" Rs.",font="lucida 10 italic")
+                lb2=Label(root,text="Subtotal     --->     "+str(tc)+" Rs.",font="lucida 10 italic")
                 lb2.pack(padx=3,pady=2)
                 lb3=Label(root,text="     GST       --->     "+str(gst)+" Rs.",font="lucida 10 italic")
                 lb3.pack(padx=3,pady=2)
                 lb4=Label(root,text="  TOTAL     ----->     "+str(tot)+" Rs.",font="lucida 12 bold")
                 lb4.pack(padx=3,pady=2)
+                paid_but= Button(root,text=" PAY",font="lucida 7", command=paid, activebackground="gray")
+                paid_but.pack(padx=3,pady=2)
+
 
             else:
-                lb_norec=Label(root,text="No records associated with the number "+str(phone_lst)+"\nEnter a correct value",)
+                lb_norec=Label(root,text="No records associated with the number "+str(phone2_value.get())+"\nEnter a correct value",)
                 lb_norec.pack(padx=1,pady=20)
                 
                 def clear1():
                     phone2_entry.delete(0,END)
+                    clr2_but.destroy()
                     lb_norec.destroy()
-                clr2_but=Button(root,text="CLEAR",font="lucida 8 bold",command=clear1)
-                clr2_but.place(x=165,y=280)
-
-                
+                clr2_but=Button(root,text="CLEAR",font="lucida 7 bold",command=clear1)
+                clr2_but.place(x=95,y=250)
+            
         def exit():
-            extbut.destroy()
+            extbut1.destroy()
             lbl.destroy()
             lbl1.destroy()
             phone2_entry.destroy()
@@ -1007,20 +1065,20 @@ def booktab():
             labelrb2.destroy()
             booktab()
 
-        extbut = Button(root,text=" BACK ",font="lucida 7", command=exit, activebackground="gray")
-        extbut.place(x=225,y=280)
+        extbut1 = Button(root,text=" BACK ",font="lucida 7 bold", command=exit, activebackground="gray")
+        extbut1.place(x=225,y=250)
         lbl=Label(root,text="Please enter your details below",font="lucida 13 italic ", fg="black")
         lbl.pack(padx=10,pady=40)
         phone2_value=IntVar()
-        lbl1=Label(root,text="Phone : ",font="lucida 12 bold ", fg="black")
-        lbl1.place(x=80,y=140)
+        lbl1=Label(root,text="CUSTOMER ID : ",font="lucida 12 bold ", fg="black")
+        lbl1.place(x=50,y=140)
         phone2_entry=Entry(root,font="8",bd=3,textvariable=phone2_value)
-        phone2_entry.place(x=155,y=142,width=100,height=20)
+        phone2_entry.place(x=175,y=142,width=100,height=20)
         nxt1_but=Button(root,text="CONTINUE",font="lucida 7 bold",command=cont)
-        nxt1_but.place(x=135,y=250)
+        nxt1_but.place(x=145,y=250)
 
 
-    def etab():
+    def etab(imagefile): # Exit Tab----------------------------------------------------------------------------------
         labelmn.destroy()
         rinfo_but.destroy()
         rserv_but.destroy()
@@ -1028,8 +1086,12 @@ def booktab():
         exit_but.destroy()
         bookings_but.destroy()
 
-        labelrb2=Label(root,text="HAPPY DAYS", font="Cordia 20 bold",bg="grey",fg="black")
-        labelrb2.pack(fill="both")
+        imagebox = tk.Label(root)
+        imagebox.pack()
+    
+        image = ImageTk.PhotoImage(file=imagefile)
+        imagebox.config(image=image)
+        imagebox.image = image 
 
     bookings_but=Button(text="  Bookings  ",command=btab,activebackground="gray")
     bookings_but.place(relx=0.5, rely=0.25, anchor=CENTER)
@@ -1043,10 +1105,9 @@ def booktab():
     pay_but = Button(text="  Payments  ",command=ptab,activebackground="gray")
     pay_but.place(relx=0.5, rely=0.7, anchor=CENTER)
 
-    exit_but = Button(text="   Exit   ",command=etab,activebackground="gray")
+    exit_but = Button(text="   Exit   ",command=lambda: etab("thx.png"),activebackground="gray")
     exit_but.place(relx=0.5, rely=0.85, anchor=CENTER)
+
 booktab()
-
-
 
 root.mainloop()
