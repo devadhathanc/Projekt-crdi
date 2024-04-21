@@ -1,4 +1,4 @@
-A python (.py) file which has got a fully functioning code required for "Hotel Bookment Application",  fully-based on Tkinter Module. This might be useful for high school CS projects
+A python (.py) file which has got a fully functioning code required for "Hotel Bookment Application",  fully-based on Tkinter Module. 
 
 The contents of the program contain,
 
